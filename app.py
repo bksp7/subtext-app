@@ -32,7 +32,6 @@ def apply_cinematic_theme(poster_url):
 h1, h2, h3, p, span {{ color: rgba(255,255,255,0.95); font-family: "SF Pro Display", sans-serif; }}
 h1 {{ font-weight: 800; letter-spacing: -1.5px; }}
 
-/* THE GRADIENT TEXT ENGINE */
 .gradient-text {{
     background: linear-gradient(90deg, #00f2fe, #4facfe, #f093fb, #f5576c);
     -webkit-background-clip: text;
@@ -73,6 +72,13 @@ h1 {{ font-weight: 800; letter-spacing: -1.5px; }}
 .entrance-anim {{ opacity: 0; transform: translateY(50px); animation: pullUpFade 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }}
 .pull-top-left {{ opacity: 0; transform: translate(20%, 10vh) scale(1.1); animation: glideToLeft 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; }}
 .gallery-fade {{ opacity: 0; transform: translateX(40px); animation: pullUpFade 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards; animation-delay: 0.4s; }}
+.terminal-fade {{ opacity: 0; transform: translateY(20px); animation: pullUpFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }}
+
+.delay-1 {{ animation-delay: 0.1s; }}
+.delay-2 {{ animation-delay: 0.2s; }}
+.delay-3 {{ animation-delay: 0.3s; }}
+.delay-4 {{ animation-delay: 0.4s; }}
+
 @keyframes pullUpFade {{ 0% {{ opacity: 0; transform: translateY(40px); }} 100% {{ opacity: 1; transform: translateY(0); }} }}
 @keyframes glideToLeft {{ 0% {{ opacity: 0; transform: translate(20%, 10vh) scale(1.1); }} 100% {{ opacity: 1; transform: translate(0, 0) scale(1); }} }}
 
@@ -105,6 +111,14 @@ div.stButton > button {{
 }}
 .rec-card img {{ width: 100%; border-radius: 12px; margin-bottom: 15px; }}
 iframe {{ border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }}
+
+/* Suggested Prompt Pills */
+.prompt-pill .stButton>button {{ 
+    background: rgba(0,0,0,0.5) !important; border: 1px solid rgba(255,255,255,0.15) !important; 
+    border-radius: 20px !important; font-size: 0.85rem !important; padding: 6px 14px !important; 
+    color: rgba(255,255,255,0.7) !important; width: auto !important; min-width: 100px !important;
+}}
+.prompt-pill .stButton>button:hover {{ border-color: #f5c518 !important; color: #f5c518 !important; background: rgba(245, 197, 24, 0.1) !important; }}
 </style>
     """, unsafe_allow_html=True)
 
@@ -165,28 +179,30 @@ else:
     _, main_col, _ = st.columns([1, 8, 1])
     with main_col:
         if st.session_state.active_view == "landing":
-            st.markdown("""<div style='text-align: center; padding-top: 40px;'><h1 class='landing-title'><span class='gradient-text'>Explore the Subtext.</span></h1></div>""", unsafe_allow_html=True)
+            st.markdown("""<div class='entrance-anim delay-1' style='text-align: center; padding-top: 40px;'><h1 class='landing-title'><span class='gradient-text'>Explore the Subtext.</span></h1><p style='color: rgba(255,255,255,0.6); font-size: 1.2rem;'>Select a recommended film or search to begin deconstruction.</p></div>""", unsafe_allow_html=True)
             sc1, sc2, sc3 = st.columns([1, 2, 1])
             with sc2:
+                st.markdown("<div class='entrance-anim delay-2'>", unsafe_allow_html=True)
                 search_query = st.text_input("Search", placeholder="Search a film title...", label_visibility="collapsed")
                 if search_query:
                     data = fetch_omdb(search_query)
                     if data and data.get("Response") == "True": init_movie_state(data); st.rerun()
+                st.markdown("</div>", unsafe_allow_html=True)
             
             cols = st.columns(3)
             for i, rec in enumerate(st.session_state.recommendations):
                 with cols[i]:
-                    st.markdown(f"<div class='rec-card'><img src='{rec['Poster']}'><h3>{rec['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {rec['imdbRating']}</p></div>", unsafe_allow_html=True)
+                    st.markdown(f"<div class='rec-card entrance-anim delay-{i+2}'><img src='{rec['Poster']}'><h3>{rec['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {rec['imdbRating']}</p></div>", unsafe_allow_html=True)
                     if st.button(f"Analyze {rec['Title']}", key=f"rec_{i}"): init_movie_state(rec); st.rerun()
                             
-            st.markdown("<h2 class='curated-title'><span class='gradient-text'>Curated Collections</span></h2>", unsafe_allow_html=True)
+            st.markdown("<h2 class='curated-title entrance-anim delay-4'><span class='gradient-text'>Curated Collections</span></h2>", unsafe_allow_html=True)
             for genre, titles in CURATED_COLLECTIONS.items():
-                st.markdown(f"<div class='genre-header'>{genre}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='genre-header entrance-anim delay-4'>{genre}</div>", unsafe_allow_html=True)
                 genre_cols = st.columns(3)
                 for i, title in enumerate(titles):
                     m = fetch_omdb(title)
                     with genre_cols[i]:
-                        st.markdown(f"<div class='rec-card'><img src='{m['Poster']}'><h3>{m['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {m.get('imdbRating')}</p></div>", unsafe_allow_html=True)
+                        st.markdown(f"<div class='rec-card entrance-anim delay-4'><img src='{m['Poster']}'><h3>{m['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {m.get('imdbRating')}</p></div>", unsafe_allow_html=True)
                         if st.button(f"Analyze {m['Title']}", key=f"curated_{genre}_{i}"): init_movie_state(m); st.rerun()
 
         elif st.session_state.active_view == "discovery" and st.session_state.current_movie_data:
@@ -200,6 +216,12 @@ else:
             title = movie['Title']
             movie_state = st.session_state.chat_history[title]
             
+            # Formatted Awards logic
+            awards_raw = movie.get('Awards', 'N/A')
+            major_awards = awards_raw.split('.')[0] if '.' in awards_raw else awards_raw
+            nom_count = awards_raw.split('.')[-1] if '.' in awards_raw else ""
+            director = movie.get('Director', 'the director').split(',')[0]
+
             col1, col2 = st.columns([1.2, 2.5], gap="large")
             with col1:
                 st.markdown(f"""
@@ -214,7 +236,9 @@ else:
 <p style='color: rgba(255,255,255,0.8); font-size: 1.1rem;'>"{movie.get('Plot', '')}"</p>
 <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);'>
 <div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Director</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Director', 'N/A')}</div></div>
+<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Writer</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Writer', 'N/A')}</div></div>
 <div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Cast</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Actors', 'N/A')}</div></div>
+<div style='display: flex;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Country</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Country', 'N/A')}</div></div>
 </div>
 </div>
                 """, unsafe_allow_html=True)
@@ -231,13 +255,30 @@ else:
 </div>
 <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;'>
 <p style='color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase;'>Accolades</p>
-<p style='font-weight: bold; font-size: 1.3rem;'>{movie.get('Awards', 'N/A')}</p>
+<p style='font-weight: bold; font-size: 1.3rem;'>{major_awards}</p><p style='font-size: 0.95rem; color: rgba(255,255,255,0.6);'>{nom_count}</p>
 </div>
                     """, unsafe_allow_html=True)
                     if st.button("Initialize Deep Dive", key="enter_chat"):
                         movie_state['chat_active'] = True
                         st.rerun()
                 else:
+                    st.markdown("<div class='terminal-fade' style='padding-top: 10px; display: flex; justify-content: space-between; align-items: center;'><h3>Subtext Analysis Terminal</h3></div>", unsafe_allow_html=True)
+                    if st.button("Close Terminal"):
+                        movie_state['chat_active'] = False
+                        st.rerun()
+                    st.write("---")
+                    
+                    if not movie_state['messages']:
+                        st.markdown("<div class='prompt-pill'>", unsafe_allow_html=True)
+                        pc1, pc2, pc3 = st.columns(3)
+                        p1 = "What thematic subtext is hidden in the opening act?"
+                        p2 = f"How does {director} use lighting to build tension?"
+                        p3 = "Analyze the psychological arc of the main character."
+                        if pc1.button(p1): movie_state['messages'].append({"role": "user", "content": p1}); st.rerun()
+                        if pc2.button(p2): movie_state['messages'].append({"role": "user", "content": p2}); st.rerun()
+                        if pc3.button(p3): movie_state['messages'].append({"role": "user", "content": p3}); st.rerun()
+                        st.markdown("</div>", unsafe_allow_html=True)
+
                     chat_container = st.container(height=500, border=False)
                     with chat_container:
                         for msg in movie_state['messages']:
