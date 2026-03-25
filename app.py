@@ -86,7 +86,7 @@ h1 {{ font-weight: 800; letter-spacing: -1.5px; }}
 .meta-badge {{ display: inline-block; padding: 6px 14px; margin: 4px; border-radius: 20px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); font-size: 0.85rem; font-weight: 500; backdrop-filter: blur(10px); }}
 .studio-badge {{ background: rgba(255, 255, 255, 0.25); color: #fff; border: 1px solid rgba(255,255,255,0.4); font-weight: 700; }}
 
-/* === GLASS BUTTONS & CARDS (RESTORED) === */
+/* === GLASS BUTTONS & CARDS === */
 .rec-card {{ 
     background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); 
     border-radius: 16px; padding: 20px; text-align: center; backdrop-filter: blur(15px); 
@@ -174,11 +174,11 @@ def generate_recommendations():
 
 if not st.session_state.recommendations: generate_recommendations()
 
-CURATED_COLLECTIONS = {{
+CURATED_COLLECTIONS = {
     "Sci-Fi & Cyberpunk": ["Dune", "Interstellar", "The Matrix"],
     "Masterpiece Drama": ["The Godfather", "Parasite", "Whiplash"],
     "Visually Stunning": ["Mad Max: Fury Road", "Spider-Man: Into the Spider-Verse", "Avatar"]
-}}
+}
 
 if st.session_state.active_view in ["splash", "landing"]: 
     apply_cinematic_theme("https://m.media-amazon.com/images/M/MV5BNzA1Njg4NzYxOV5BMl5BanBnXkFtZTgwODk5NjU3MzI@._V1_SX300.jpg")
@@ -188,7 +188,7 @@ elif st.session_state.current_movie_data:
 def init_movie_state(movie_data):
     title = movie_data["Title"]
     if title not in st.session_state.chat_history:
-        st.session_state.chat_history[title] = {{"data": movie_data, "messages": [], "chat_active": False}}
+        st.session_state.chat_history[title] = {"data": movie_data, "messages": [], "chat_active": False}
     st.session_state.current_movie_data = movie_data
     st.session_state.active_view = "discovery"
 
@@ -212,19 +212,21 @@ else:
             
             cols = st.columns(3)
             for i, rec in enumerate(st.session_state.recommendations):
-                with cols[i]:
-                    st.markdown(f"<div class='rec-card entrance-anim delay-{i+2}'><img src='{{rec['Poster']}}'><h3>{{rec['Title']}}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {{rec['imdbRating']}}</p></div>", unsafe_allow_html=True)
-                    if st.button(f"Analyze {{rec['Title']}}", key=f"rec_{{i}}"): init_movie_state(rec); st.rerun()
+                if rec:
+                    with cols[i]:
+                        st.markdown(f"<div class='rec-card entrance-anim delay-{i+2}'><img src='{rec['Poster']}'><h3>{rec['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {rec['imdbRating']}</p></div>", unsafe_allow_html=True)
+                        if st.button(f"Analyze {rec['Title']}", key=f"rec_{i}"): init_movie_state(rec); st.rerun()
                             
             st.markdown("<h2 class='curated-title entrance-anim delay-4'><span class='gradient-text'>Curated Collections</span></h2>", unsafe_allow_html=True)
             for genre, titles in CURATED_COLLECTIONS.items():
-                st.markdown(f"<div class='genre-header entrance-anim delay-4'>{{genre}}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div class='genre-header entrance-anim delay-4'>{genre}</div>", unsafe_allow_html=True)
                 genre_cols = st.columns(3)
                 for i, title in enumerate(titles):
                     m = fetch_omdb(title)
-                    with genre_cols[i]:
-                        st.markdown(f"<div class='rec-card entrance-anim delay-4'><img src='{{m['Poster']}}'><h3>{{m['Title']}}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {{m.get('imdbRating')}}</p></div>", unsafe_allow_html=True)
-                        if st.button(f"Analyze {{m['Title']}}", key=f"curated_{{genre}}_{{i}}"): init_movie_state(m); st.rerun()
+                    if m:
+                        with genre_cols[i]:
+                            st.markdown(f"<div class='rec-card entrance-anim delay-4'><img src='{m['Poster']}'><h3>{m['Title']}</h3><p style='color: #f5c518; font-weight: bold;'>IMDb: {m.get('imdbRating')}</p></div>", unsafe_allow_html=True)
+                            if st.button(f"Analyze {m['Title']}", key=f"curated_{genre}_{i}"): init_movie_state(m); st.rerun()
 
         elif st.session_state.active_view == "discovery" and st.session_state.current_movie_data:
             c1, c2, c3 = st.columns([1, 2, 1])
@@ -246,19 +248,19 @@ else:
             with col1:
                 st.markdown(f"""
 <div class='pull-top-left' style='padding-top: 20px;'>
-<img src='{{movie['Poster']}}' class='poster-img' style='width: 100%;'>
-<h1 style='font-size: 2.5rem;'>{{movie['Title']}}</h1>
+<img src='{movie['Poster']}' class='poster-img' style='width: 100%;'>
+<h1 style='font-size: 2.5rem;'>{movie['Title']}</h1>
 <div style='margin-bottom: 15px;'>
-<span class='meta-badge studio-badge'>{{movie.get('Production', 'N/A')}}</span>
-<span class='meta-badge'>{{movie.get('Year', 'N/A')}}</span>
-<span class='meta-badge' style='border-color: #f5c518; color: #f5c518;'>IMDb: {{movie.get('imdbRating', 'N/A')}}</span>
+<span class='meta-badge studio-badge'>{movie.get('Production', 'N/A')}</span>
+<span class='meta-badge'>{movie.get('Year', 'N/A')}</span>
+<span class='meta-badge' style='border-color: #f5c518; color: #f5c518;'>IMDb: {movie.get('imdbRating', 'N/A')}</span>
 </div>
-<p style='color: rgba(255,255,255,0.8); font-size: 1.1rem;'>"{{movie.get('Plot', '')}}"</p>
+<p style='color: rgba(255,255,255,0.8); font-size: 1.1rem;'>"{movie.get('Plot', '')}"</p>
 <div style='background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);'>
-<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Director</strong></div><div style='color: #fff; font-size: 0.85rem;'>{{movie.get('Director', 'N/A')}}</div></div>
-<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Writer</strong></div><div style='color: #fff; font-size: 0.85rem;'>{{movie.get('Writer', 'N/A')}}</div></div>
-<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Cast</strong></div><div style='color: #fff; font-size: 0.85rem;'>{{movie.get('Actors', 'N/A')}}</div></div>
-<div style='display: flex;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Country</strong></div><div style='color: #fff; font-size: 0.85rem;'>{{movie.get('Country', 'N/A')}}</div></div>
+<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Director</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Director', 'N/A')}</div></div>
+<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Writer</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Writer', 'N/A')}</div></div>
+<div style='display: flex; margin-bottom: 8px;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Cast</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Actors', 'N/A')}</div></div>
+<div style='display: flex;'><div style='width: 85px; flex-shrink: 0;'><strong style='color: rgba(255,255,255,0.5); text-transform: uppercase; font-size: 0.8rem;'>Country</strong></div><div style='color: #fff; font-size: 0.85rem;'>{movie.get('Country', 'N/A')}</div></div>
 </div>
 </div>
                 """, unsafe_allow_html=True)
@@ -266,16 +268,16 @@ else:
             with col2:
                 if not movie_state.get('chat_active', False):
                     st.markdown("<div class='gallery-fade' style='padding-top: 30px;'>", unsafe_allow_html=True)
-                    tid = fetch_youtube_trailer(f"{{title}} {{movie.get('Year')}}")
-                    if tid: st.video(f"https://www.youtube.com/watch?v={{tid}}")
+                    tid = fetch_youtube_trailer(f"{title} {movie.get('Year')}")
+                    if tid: st.video(f"https://www.youtube.com/watch?v={tid}")
                     st.markdown(f"""
 <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;'>
-<div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);'><p style='color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase;'>Box Office</p><p style='font-weight: bold; font-size: 1.4rem;'>{{movie.get('BoxOffice', 'N/A')}}</p></div>
-<div style='background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05);'><p style='color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; text-transform: uppercase;'>Metascore</p><p style='color: #66cc33; font-weight: bold; font-size: 1.4rem;'>{{movie.get('Metascore', 'N/A')}}</p></div>
+<div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);'><p style='color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase;'>Box Office</p><p style='font-weight: bold; font-size: 1.4rem;'>{movie.get('BoxOffice', 'N/A')}</p></div>
+<div style='background: rgba(255, 255, 255, 0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.05);'><p style='color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; text-transform: uppercase;'>Metascore</p><p style='color: #66cc33; font-weight: bold; font-size: 1.4rem;'>{movie.get('Metascore', 'N/A')}</p></div>
 </div>
 <div style='background: rgba(255,255,255,0.03); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 30px;'>
 <p style='color: rgba(255,255,255,0.5); font-size: 0.8rem; text-transform: uppercase;'>Accolades</p>
-<p style='font-weight: bold; font-size: 1.3rem;'>{{major_awards}}</p><p style='font-size: 0.95rem; color: rgba(255,255,255,0.6);'>{{nom_count}}</p>
+<p style='font-weight: bold; font-size: 1.3rem;'>{major_awards}</p><p style='font-size: 0.95rem; color: rgba(255,255,255,0.6);'>{nom_count}</p>
 </div>
                     """, unsafe_allow_html=True)
                     if st.button("Initialize Deep Dive", key="enter_chat"):
@@ -292,11 +294,11 @@ else:
                         st.markdown("<div class='prompt-pill'>", unsafe_allow_html=True)
                         pc1, pc2, pc3 = st.columns(3)
                         p1 = "What thematic subtext is hidden in the opening act?"
-                        p2 = f"How does {{director_name}} use lighting to build tension?"
+                        p2 = f"How does {director_name} use lighting to build tension?"
                         p3 = "Analyze the psychological arc of the main character."
-                        if pc1.button(p1): movie_state['messages'].append({{"role": "user", "content": p1}}); st.rerun()
-                        if pc2.button(p2): movie_state['messages'].append({{"role": "user", "content": p2}}); st.rerun()
-                        if pc3.button(p3): movie_state['messages'].append({{"role": "user", "content": p3}}); st.rerun()
+                        if pc1.button(p1): movie_state['messages'].append({"role": "user", "content": p1}); st.rerun()
+                        if pc2.button(p2): movie_state['messages'].append({"role": "user", "content": p2}); st.rerun()
+                        if pc3.button(p3): movie_state['messages'].append({"role": "user", "content": p3}); st.rerun()
                         st.markdown("</div>", unsafe_allow_html=True)
 
                     chat_container = st.container(height=500, border=False)
@@ -306,5 +308,5 @@ else:
                         if movie_state['messages'] and movie_state['messages'][-1]["role"] == "user":
                             with st.chat_message("assistant"):
                                 response = client.chats.create(model="gemini-3-flash-preview").send_message(movie_state['messages'][-1]["content"])
-                                st.markdown(response.text); movie_state['messages'].append({{"role": "assistant", "content": response.text}})
-                    if p := st.chat_input("Transmit inquiry..."): movie_state['messages'].append({{"role": "user", "content": p}}); st.rerun()
+                                st.markdown(response.text); movie_state['messages'].append({"role": "assistant", "content": response.text})
+                    if p := st.chat_input("Transmit inquiry..."): movie_state['messages'].append({"role": "user", "content": p}); st.rerun()
