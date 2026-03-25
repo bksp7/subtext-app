@@ -102,31 +102,16 @@ div.stButton > button {{
     height: 100%; display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
     margin-bottom: 15px; position: relative;
 }}
-.rec-card:hover {{ transform: translateY(-8px) scale(1.03); background: rgba(255, 255, 255, 0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }}
 .rec-card img {{ width: 100%; object-fit: cover; border-radius: 12px; margin-bottom: 15px; }}
 
-[data-testid="stVerticalBlock"] > div[data-testid="column"] .stButton > button::before {{
-    content: ""; position: absolute; top: -450px; left: 0; right: 0; bottom: 0; z-index: 10; cursor: pointer; background: transparent;
-}}
-div[data-testid="column"] div.stButton {{ display: flex !important; justify-content: center !important; width: 100% !important; }}
-div[data-testid="column"] div.stButton > button {{ width: auto !important; min-width: 180px !important; z-index: 11 !important; }}
-
 iframe {{ border-radius: 16px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); margin-bottom: 25px; border: 1px solid rgba(255,255,255,0.1); }}
-.stChatMessage {{ background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)) !important; backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 24px !important; padding: 20px !important; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }}
 </style>
     """, unsafe_allow_html=True)
 
 # --- 2. CONFIG & STATE ---
-# Initialize keys to None to prevent NameErrors
-GEMINI_KEY = OMDB_KEY = YOUTUBE_API_KEY = None
-
-try:
-    GEMINI_KEY = st.secrets["GEMINI_KEY"]
-    OMDB_KEY = st.secrets["OMDB_KEY"]
-    YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
-except Exception:
-    st.error("Missing Secrets in Streamlit Settings.")
-    st.stop()
+GEMINI_KEY = st.secrets["GEMINI_KEY"]
+OMDB_KEY = st.secrets["OMDB_KEY"]
+YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
 
 client = genai.Client(api_key=GEMINI_KEY)
 
@@ -134,8 +119,6 @@ if "active_view" not in st.session_state: st.session_state.active_view = "splash
 if "chat_history" not in st.session_state: st.session_state.chat_history = {} 
 if "current_movie_data" not in st.session_state: st.session_state.current_movie_data = None
 if "recommendations" not in st.session_state: st.session_state.recommendations = []
-
-BR2049_BG = "https://m.media-amazon.com/images/M/MV5BNzA1Njg4NzYxOV5BMl5BanBnXkFtZTgwODk5NjU3MzI@._V1_SX300.jpg"
 
 @st.cache_data(show_spinner=False)
 def fetch_omdb(title):
@@ -174,8 +157,10 @@ CURATED_COLLECTIONS = {
     "Visually Stunning": ["Mad Max: Fury Road", "Spider-Man: Into the Spider-Verse", "Avatar"]
 }
 
-if st.session_state.active_view in ["splash", "landing"]: apply_cinematic_theme(BR2049_BG)
-elif st.session_state.current_movie_data: apply_cinematic_theme(st.session_state.current_movie_data.get('Poster', BR2049_BG))
+if st.session_state.active_view in ["splash", "landing"]: 
+    apply_cinematic_theme("https://m.media-amazon.com/images/M/MV5BNzA1Njg4NzYxOV5BMl5BanBnXkFtZTgwODk5NjU3MzI@._V1_SX300.jpg")
+elif st.session_state.current_movie_data: 
+    apply_cinematic_theme(st.session_state.current_movie_data.get('Poster'))
 
 def init_movie_state(movie_data):
     title = movie_data["Title"]
@@ -190,7 +175,7 @@ if st.session_state.active_view == "splash":
     time.sleep(6); st.session_state.active_view = "landing"; st.rerun()
 
 else:
-    left_spacer, main_col, right_spacer = st.columns([1, 8, 1])
+    _, main_col, _ = st.columns([1, 8, 1])
     with main_col:
         if st.session_state.active_view == "landing":
             st.markdown("""<div class='entrance-anim' style='text-align: center; padding-top: 40px;'><h1 class='landing-title'><span class='gradient-text'>Explore the Subtext.</span></h1><p style='color: rgba(255,255,255,0.6); font-size: 1.2rem;'>Select a recommended film or search to begin deconstruction.</p></div>""", unsafe_allow_html=True)
@@ -200,7 +185,6 @@ else:
                 if search_query:
                     data = fetch_omdb(search_query)
                     if data and data.get("Response") == "True": init_movie_state(data); st.rerun()
-                    else: st.error("Film not found.")
             
             cols = st.columns(3)
             for i, rec in enumerate(st.session_state.recommendations):
